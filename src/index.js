@@ -1,7 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config(
+    {
+        path:'./.env'
+    }
+);
+
 import mongoose from "mongoose";
-const connectDB = async () => {
-    try
-
-
-}
-connectDB()
+import{DB_NAME}  from "./constants.js";
+import connectDB from "./db/index.js";
+connectDB();
