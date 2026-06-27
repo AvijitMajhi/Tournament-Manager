@@ -1,1 +1,1 @@
-export const DB_NAME="football_tournament_manager";
+export const DB_NAME= "football_tournament_manager";
