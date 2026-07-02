@@ -1,9 +1,10 @@
 import { Team } from "../models/team.model.js";
 import { Tournament } from "../models/tournament.model.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { asyncHandler } from "../utlis/asyncHandler.js";
+import { ApiError } from "../utlis/ApiError.js";
+import { ApiResponse } from "../utlis/ApiResponse.js";
+import { uploadOnCloudinary } from "../utlis/cloudinary.js";
+import { Match } from "../models/match.model.js";
 const createTeam = asyncHandler(async (req, res) => {
 
     const {
@@ -109,9 +110,8 @@ const createTeam = asyncHandler(async (req, res) => {
 
             201,
 
-            team,
 
-            "Team created successfully"
+            "Team created successfully",team
 
         )
 
@@ -127,8 +127,7 @@ const getAllTeams = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            teams,
-            "Teams fetched successfully"
+            "Teams fetched successfully", teams
         )
     );
 
@@ -148,8 +147,7 @@ const getTeamById = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            team,
-            "Team fetched successfully"
+            "Team fetched successfully", team
         )
     );
 
@@ -205,8 +203,7 @@ const updateTeam = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            updatedTeam,
-            "Team updated successfully"
+            "Team updated successfully", updatedTeam
         )
     );
 
@@ -227,16 +224,28 @@ const deleteTeam = asyncHandler(async (req, res) => {
             "You are not authorized"
         );
     }
+const matchExists = await Match.exists({
+    $or: [
+        { homeTeam: id },
+        { awayTeam: id },
+    ],
+});
 
+if (matchExists) {
+    throw new ApiError(
+        400,
+        "Cannot delete a team after fixtures have been generated."
+    );
+}
     await team.deleteOne();
 
     return res.status(200).json(
         new ApiResponse(
             200,
-            {},
-            "Team deleted successfully"
+            "Team deleted successfully",{ }
         )
     );
 
 });
+
  export {createTeam,getAllTeams,getTeamById,updateTeam,deleteTeam}

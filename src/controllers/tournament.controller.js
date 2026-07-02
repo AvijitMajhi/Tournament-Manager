@@ -3,6 +3,7 @@ import { asyncHandler } from "../utlis/asyncHandler.js";
 import { ApiError } from "../utlis/ApiError.js";
 import { ApiResponse } from "../utlis/ApiResponse.js";
 import { uploadOnCloudinary } from "../utlis/cloudinary.js";
+import { Team } from "../models/team.model.js";
 
 const createTournament=asyncHandler(async(req,res)=>{
 const {name,description,location,startDate,endDate,registrationDeadline,tournamentType,maxTeams}=req.body;
@@ -102,11 +103,87 @@ const deleteTournament=asyncHandler(async(req,res)=>{
         403,"You are not authorized"
     )
   }
-  await tournament.deleteOne();
+  await Team.deleteMany({
+    tournament: id,
+});
+
+await Match.deleteMany({
+    tournament: id,
+});
+
+await Tournament.findByIdAndDelete(id);
   return res.status(200).json(
     new ApiResponse(
         200,"Tournament deleted successfully",{}
     )
   )
 })
-export {createTournament,getAllTournaments,getTournamentById,updateTournament,deleteTournament}
+const getStandings = asyncHandler(async (req, res) => {
+
+    const { tournamentId } = req.params;
+
+    const tournament = await Tournament.findById(tournamentId);
+    
+    if (!tournament) {
+        throw new ApiError(404, "Tournament not found");
+    }
+
+    if (tournament.tournamentType !== "League") {
+        throw new ApiError(
+            400,
+            "Standings are available only for League tournaments."
+        );
+    }
+
+    const teams = await Team.find({
+        tournament: tournamentId
+    });
+
+    teams.sort((a, b) => {
+
+        if (b.points !== a.points)
+            return b.points - a.points;
+
+        if (b.goalDifference !== a.goalDifference)
+            return b.goalDifference - a.goalDifference;
+
+        return b.goalsFor - a.goalsFor;
+
+    });
+
+    const standings = teams.map((team, index) => ({
+
+        position: index + 1,
+
+        teamId: team._id,
+
+        teamName: team.name,
+
+        played: team.played,
+
+        won: team.won,
+
+        draw: team.draw,
+
+        lost: team.lost,
+
+        goalsFor: team.goalsFor,
+
+        goalsAgainst: team.goalsAgainst,
+
+        goalDifference: team.goalDifference,
+
+        points: team.points
+
+    }));
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            
+            "Standings fetched successfully",standings
+        )
+    );
+
+});
+export {createTournament,getAllTournaments,getTournamentById,updateTournament,deleteTournament,getStandings}

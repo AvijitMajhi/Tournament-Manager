@@ -8,17 +8,17 @@ const matchSchema = new Schema(
             required: true,
         },
 
-        homeTeam: {
-            type: Schema.Types.ObjectId,
-            ref: "Team",
-            required: true,
-        },
+     homeTeam: {
+    type: Schema.Types.ObjectId,
+    ref: "Team",
+    default: null,
+},
 
-        awayTeam: {
-            type: Schema.Types.ObjectId,
-            ref: "Team",
-            required: true,
-        },
+awayTeam: {
+    type: Schema.Types.ObjectId,
+    ref: "Team",
+    default: null,
+},
 
         matchDate: {
             type: Date,
@@ -65,6 +65,21 @@ const matchSchema = new Schema(
             ref: "User",
             required: true,
         },
+        nextMatch: {
+    type: Schema.Types.ObjectId,
+    ref: "Match",
+    default: null,
+},
+
+nextMatchPosition: {
+    type: String,
+    enum: ["home", "away"],
+    default: null,
+},
+matchNumber: {
+    type: Number,
+    required: true,
+},
     },
     {
         timestamps: true,

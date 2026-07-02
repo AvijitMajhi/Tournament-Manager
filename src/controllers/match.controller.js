@@ -2,9 +2,10 @@ import { Match } from "../models/match.model.js";
 import { Team } from "../models/team.model.js";
 import { Tournament } from "../models/tournament.model.js";
 import { generateLeagueFixtures } from "../services/leagueFixture.service.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { generateKnockoutFixtures } from "../services/knockout.service.js";
+import { asyncHandler } from "../utlis/asyncHandler.js";
+import { ApiError } from "../utlis/ApiError.js";
+import { ApiResponse } from "../utlis/ApiResponse.js";
 const createMatch = asyncHandler(async (req, res) => {
 
     const {
@@ -217,11 +218,16 @@ const generateFixtures=asyncHandler(async(req,res)=>{
      if(!tournament){
         throw new ApiError(404,"Tournament Not Found")
      }
-     if(tournament.tournamentType!=="League"){
-        throw new ApiError(
-            400,"Only Leauge Tournament supported currently"
-        )
-     }
+   const teamCount = await Team.countDocuments({
+    tournament: tournamentId
+});
+
+if (teamCount >= tournament.maxTeams) {
+    throw new ApiError(
+        400,
+        "Maximum number of teams reached."
+    );
+}
      const teams=await Team.find({
         tournament:tournamentId
      })
@@ -232,42 +238,34 @@ const generateFixtures=asyncHandler(async(req,res)=>{
      }
    let fixtures=[];
 
-switch(tournament.tournamentType){
+switch (tournament.tournamentType) {
 
     case "League":
 
-        fixtures=
-        generateLeagueFixtures(
-            teams
-        );
+        fixtures = generateLeagueFixtures(teams);
 
+        // insertMany() here
         break;
 
     case "Knockout":
 
-        fixtures=
-        generateKnockoutFixtures(
-            teams
+        const matches = await generateKnockoutFixtures(
+            teams,
+            tournament,
+            req.user._id
         );
 
-        break;
+        return res.status(201).json(
+            new ApiResponse(
+                201,
+                matches,
+                "Knockout fixtures generated successfully"
+            )
+        );
 
     case "League + Knockout":
-
-        fixtures=
-        generateLeagueKnockoutFixtures(
-            teams
-        );
-
+        // We'll implement this later
         break;
-
-    default:
-
-        throw new ApiError(
-            400,
-            "Invalid tournament type"
-        );
-
 }
 const matches=fixtures.map(
 (match,index)=>({
@@ -284,15 +282,161 @@ const matches=fixtures.map(
 
     matchDate:tournament.startDate,
 
-    createdBy:req.user._id
+    createdBy:req.user._id,
+     
+    matchNumber:index+1
 
 }));
 
-await Match.insertMany(fixtures);
+await Match.insertMany(matches);
+
 return res.status(201).json(
     new ApiResponse(
         201,"Fixtures generated successfully",matches
     )
 )
 })
-export {createMatch,getAllMatches,getMatchById,updateMatch,deleteMatch}
+const updateMatchResult = asyncHandler(async (req, res) => {
+
+    const { id } = req.params;
+
+    const { homeScore, awayScore } = req.body;
+
+    const match = await Match.findById(id);
+
+    if (!match) {
+        throw new ApiError(404, "Match not found");
+    }
+
+    if (match.status === "Completed") {
+        throw new ApiError(400, "Result already entered");
+    }
+
+    const homeTeam = await Team.findById(match.homeTeam);
+
+    const awayTeam = await Team.findById(match.awayTeam);
+
+    match.homeScore = homeScore;
+    match.awayScore = awayScore;
+    match.status = "Completed";
+
+if (homeScore > awayScore) {
+
+    match.winner = homeTeam._id;
+
+} else if (awayScore > homeScore) {
+
+    match.winner = awayTeam._id;
+
+} else {
+
+    if (Tournament.tournamentType === "League") {
+
+        match.winner = null;
+
+    } else {
+
+        throw new ApiError(
+            400,
+            "Knockout matches cannot end in a draw. Enter penalty scores."
+        );
+
+    }
+
+}
+
+    await match.save();
+// Advance winner to next knockout match
+if (match.nextMatch && match.winner) {
+
+    const nextMatch = await Match.findById(match.nextMatch);
+
+    if (!nextMatch) {
+        throw new ApiError(404, "Next match not found");
+    }
+
+    if (match.nextMatchPosition === "home") {
+        nextMatch.homeTeam = match.winner;
+    } else {
+        nextMatch.awayTeam = match.winner;
+    }
+
+    await nextMatch.save();
+    if (
+    Tournament.tournamentType === "Knockout" &&
+    match.nextMatch &&
+    match.winner
+) {
+
+    const nextMatch = await Match.findById(match.nextMatch);
+
+    if (!nextMatch) {
+        throw new ApiError(404, "Next match not found");
+    }
+
+    if (match.nextMatchPosition === "home") {
+
+        nextMatch.homeTeam = match.winner;
+
+    } else {
+
+        nextMatch.awayTeam = match.winner;
+
+    }
+
+    await nextMatch.save();
+
+}
+}
+    homeTeam.played++;
+    awayTeam.played++;
+
+    homeTeam.goalsFor += homeScore;
+    homeTeam.goalsAgainst += awayScore;
+
+    awayTeam.goalsFor += awayScore;
+    awayTeam.goalsAgainst += homeScore;
+
+    if (Tournament.tournamentType === "League") {
+
+    if (homeScore > awayScore) {
+
+        homeTeam.won++;
+        awayTeam.lost++;
+        homeTeam.points += 3;
+
+    } else if (awayScore > homeScore) {
+
+        awayTeam.won++;
+        homeTeam.lost++;
+        awayTeam.points += 3;
+
+    } else {
+
+        homeTeam.draw++;
+        awayTeam.draw++;
+
+        homeTeam.points++;
+        awayTeam.points++;
+
+    }
+
+}
+
+    homeTeam.goalDifference =
+        homeTeam.goalsFor - homeTeam.goalsAgainst;
+
+    awayTeam.goalDifference =
+        awayTeam.goalsFor - awayTeam.goalsAgainst;
+
+    await homeTeam.save();
+    await awayTeam.save();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Match result updated successfully", match
+        )
+    );
+});
+export {createMatch,getAllMatches,getMatchById,updateMatch,deleteMatch,generateFixtures,updateMatchResult}
