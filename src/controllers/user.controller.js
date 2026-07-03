@@ -80,12 +80,11 @@ return res
     .json(
         new ApiResponse(
             200,
-            {
+            "User logged in successfully", {
                 user: loggedInUser,
                 accessToken,
                 refreshToken,
-            },
-            "User logged in successfully"
+            }
         )
     );
 })
@@ -140,11 +139,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             .json(
                 new ApiResponse(
                     200,
-                    {
+                    "Access token refreshed successfully",
+                     {
                         accessToken,
                         refreshToken,
-                    },
-                    "Access token refreshed successfully"
+                    }
                 )
             );
 
@@ -156,8 +155,8 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
+            "Current user fetched successfully",
             req.user,
-            "Current user fetched successfully"
         )
     );
 });
@@ -185,8 +184,8 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            user,
-            "Profile updated successfully"
+            "Profile updated successfully",
+             user,
         )
     );
 });
@@ -215,8 +214,8 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            {},
-            "Password changed successfully"
+            
+            "Password changed successfully",{}
         )
     );
 });
