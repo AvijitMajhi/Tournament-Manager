@@ -4,7 +4,7 @@ import { ApiError } from "../utlis/ApiError.js";
 import { ApiResponse } from "../utlis/ApiResponse.js";
 import { uploadOnCloudinary } from "../utlis/cloudinary.js";
 import { Team } from "../models/team.model.js";
-
+import { Match } from "../models/match.model.js";
 const createTournament=asyncHandler(async(req,res)=>{
 const {name,description,location,startDate,endDate,registrationDeadline,tournamentType,maxTeams}=req.body;
 if(!name||!location||!startDate||!endDate||!registrationDeadline||!maxTeams){
