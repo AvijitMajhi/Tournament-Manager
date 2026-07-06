@@ -74,7 +74,8 @@ const {accessToken,refreshToken}=await generateAccessAndRefreshTokens(user._id);
 const loggedInUser=await User.findById(user._id).select("-password -refreshToken");
 const options={
     httpOnly:true,
-    secure:true
+    secure:true,
+    samesite:"None"
 }
 return res
     .status(200)
@@ -95,7 +96,8 @@ const logoutUser=asyncHandler(async(req,res)=>{
 await User.findByIdAndUpdate(req.user._id,{ $set: { refreshToken: undefined } },{new:true});
 const options={
     httpOnly:true,
-    secure:true}
+    secure:true,
+    samesite:"None"}
     return res
     .status(200 )
     .clearCookie("accessToken", options)
@@ -132,7 +134,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
         const options = {
             httpOnly: true,
-            secure: true, // false in local development if not using HTTPS
+            secure: true,
+            samesite: "None"
         };
 
         return res
