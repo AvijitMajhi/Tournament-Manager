@@ -9,32 +9,30 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
-        if (!localFilePath) {
-            console.error("Local file path is required");
-            return null;
-        }
+        if (!localFilePath) return null;
 
         const result = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto",
         });
 
-        console.log("File uploaded to Cloudinary:", result.secure_url);
+        console.log("File uploaded:", result.secure_url);
 
-        // Delete the local file only if it exists
         if (fs.existsSync(localFilePath)) {
             fs.unlinkSync(localFilePath);
         }
 
-        return result;
-    } catch (error) {
+        // ✅ RETURN ONLY SECURE URL
+        return {
+            url: result.secure_url,
+            public_id: result.public_id,
+        };
 
-        // Delete the local file only if it exists
+    } catch (error) {
         if (localFilePath && fs.existsSync(localFilePath)) {
             fs.unlinkSync(localFilePath);
         }
 
-        console.error("Error uploading to Cloudinary:", error);
-
+        console.error("Cloudinary upload error:", error);
         return null;
     }
 };
