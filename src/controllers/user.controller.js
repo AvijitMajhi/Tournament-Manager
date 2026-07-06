@@ -72,10 +72,10 @@ if(!isPasswordCorrect){
 }
 const {accessToken,refreshToken}=await generateAccessAndRefreshTokens(user._id);
 const loggedInUser=await User.findById(user._id).select("-password -refreshToken");
-const options={
-    httpOnly:true,
-    secure:true,
-    samesite:"None"
+const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
 }
 return res
     .status(200)
@@ -94,10 +94,11 @@ return res
 })
 const logoutUser=asyncHandler(async(req,res)=>{
 await User.findByIdAndUpdate(req.user._id,{ $set: { refreshToken: undefined } },{new:true});
-const options={
-    httpOnly:true,
-    secure:true,
-    samesite:"None"}
+const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+}
     return res
     .status(200 )
     .clearCookie("accessToken", options)
@@ -133,11 +134,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             await generateAccessAndRefreshTokens(user._id);
 
         const options = {
-            httpOnly: true,
-            secure: true,
-            samesite: "None"
-        };
-
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+}
         return res
             .status(200)
             .cookie("accessToken", accessToken, options)
