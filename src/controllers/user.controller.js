@@ -34,7 +34,7 @@ const registerUser=asyncHandler(async(req,res,next)=>{
  }
 const existedUser=await User.findOne({$or:[{email}, {username}]});
 if(existedUser){
-    throw new ApiError(400,"User already exists with this email");
+    throw new ApiError(400,"User already exists with this email or username");
 }
 const avatarLocalFilePath=req.files?.avatar?.[0]?.path;
 if (!avatarLocalFilePath) {
