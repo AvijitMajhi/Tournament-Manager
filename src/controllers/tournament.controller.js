@@ -23,7 +23,7 @@ const uploadedBanner=await uploadOnCloudinary(bannerLocalPath);
 if(!uploadOnCloudinary){
     throw new ApiError(500,"Banner upload is failed")
 }
-banner =uploadedBanner.url
+banner = uploadedBanner.secure_url;
 }
 const tournament=await Tournament.create({
     name,description,location,banner,startDate,endDate,registrationDeadline,tournamentType,maxTeams,creator:req.user._id
