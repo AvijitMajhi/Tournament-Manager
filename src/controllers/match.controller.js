@@ -101,8 +101,7 @@ const getAllMatches = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            matches,
-            "Matches fetched successfully"
+            "Matches fetched successfully", matches
         )
     );
 
@@ -222,12 +221,13 @@ const generateFixtures=asyncHandler(async(req,res)=>{
     tournament: tournamentId
 });
 
-if (teamCount >= tournament.maxTeams) {
+if (teamCount < tournament.maxTeams) {
     throw new ApiError(
         400,
-        "Maximum number of teams reached."
+        "Tournament is not full yet."
     );
 }
+
      const teams=await Team.find({
         tournament:tournamentId
      })
@@ -303,7 +303,7 @@ const updateMatchResult = asyncHandler(async (req, res) => {
     const { homeScore, awayScore } = req.body;
 
     const match = await Match.findById(id);
-
+  
     if (!match) {
         throw new ApiError(404, "Match not found");
     }
@@ -311,7 +311,15 @@ const updateMatchResult = asyncHandler(async (req, res) => {
     if (match.status === "Completed") {
         throw new ApiError(400, "Result already entered");
     }
-
+const tournament = await Tournament.findById(match.tournament);
+  if(tournament.creator.toString()!==req.user._id.toString()){
+    throw  new ApiError(
+        403,"You are not authorized"
+    )
+  }
+if (!tournament) {
+    throw new ApiError(404, "Tournament not found");
+}
     const homeTeam = await Team.findById(match.homeTeam);
 
     const awayTeam = await Team.findById(match.awayTeam);
@@ -330,7 +338,7 @@ if (homeScore > awayScore) {
 
 } else {
 
-    if (Tournament.tournamentType === "League") {
+    if (tournament.tournamentType === "League") {
 
         match.winner = null;
 
@@ -363,9 +371,7 @@ if (match.nextMatch && match.winner) {
 
     await nextMatch.save();
     if (
-    Tournament.tournamentType === "Knockout" &&
-    match.nextMatch &&
-    match.winner
+    tournament.tournamentType === "Knockout"
 ) {
 
     const nextMatch = await Match.findById(match.nextMatch);
@@ -397,7 +403,7 @@ if (match.nextMatch && match.winner) {
     awayTeam.goalsFor += awayScore;
     awayTeam.goalsAgainst += homeScore;
 
-    if (Tournament.tournamentType === "League") {
+    if (tournament.tournamentType === "League") {
 
     if (homeScore > awayScore) {
 

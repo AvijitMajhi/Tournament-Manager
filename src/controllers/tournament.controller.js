@@ -60,7 +60,8 @@ const updateTournament=asyncHandler(async(req,res)=>{
   const tournament=await Tournament.findById(id);
   if(!tournament){
     throw new ApiError(404,"Tournament not found")
-  }
+    }
+
   if(tournament.creator.toString()!==req.user._id.toString()){
     throw  new ApiError(
         403,"You are not authorized"
@@ -92,6 +93,7 @@ return res.status(200).json(
 )
   
 })
+
 const deleteTournament=asyncHandler(async(req,res)=>{
  const {id} =req.params;
   const tournament=await Tournament.findById(id);
@@ -186,4 +188,64 @@ const getStandings = asyncHandler(async (req, res) => {
     );
 
 });
-export {createTournament,getAllTournaments,getTournamentById,updateTournament,deleteTournament,getStandings}
+const getTournamentDashboard = asyncHandler(async (req, res) => {
+
+    const { id } = req.params;
+
+    const tournament = await Tournament.findById(id);
+
+    if (!tournament) {
+        throw new ApiError(404, "Tournament not found");
+    }
+
+    const totalTeams = await Team.countDocuments({
+        tournament: id,
+    });
+
+    const totalMatches = await Match.countDocuments({
+        tournament: id,
+    });
+
+    const completedMatches = await Match.countDocuments({
+        tournament: id,
+        status: "Completed",
+    });
+
+    const upcomingMatches = await Match.countDocuments({
+        tournament: id,
+        status: "Scheduled",
+    });
+
+    const recentMatches = await Match.find({
+        tournament: id,
+    })
+        .populate("homeTeam", "name shortName logo")
+        .populate("awayTeam", "name shortName logo")
+        .sort({ matchDate: -1 })
+        .limit(5);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Tournament dashboard fetched successfully",
+            {
+                tournament,
+                totalTeams,
+                totalMatches,
+                completedMatches,
+                upcomingMatches,
+                recentMatches,
+            }
+        )
+    );
+
+});
+export {
+    createTournament,
+    getAllTournaments,
+    getTournamentById,
+    updateTournament,
+    deleteTournament,
+    getStandings,
+    getTournamentDashboard
+};

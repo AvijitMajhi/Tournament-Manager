@@ -37,7 +37,7 @@ const tournamentSchema = new Schema({
         type: Number,
         required: true},
     creator: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "User",
         required: true
     },

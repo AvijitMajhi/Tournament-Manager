@@ -4,6 +4,9 @@ import {User} from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utlis/cloudinary.js";
 import {ApiResponse} from "../utlis/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import { Tournament } from "../models/tournament.model.js";
+import { Team } from "../models/team.model.js";
+import { Match } from "../models/match.model.js";
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
@@ -152,13 +155,39 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 const getCurrentUser = asyncHandler(async (req, res) => {
+
+    const user = await User.findById(req.user._id)
+        .select("-password -refreshToken");
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const totalTournaments = await Tournament.countDocuments({
+        creator: req.user._id,
+    });
+
+    const totalTeams = await Team.countDocuments({
+        createdBy: req.user._id,
+    });
+
+    const totalMatches = await Match.countDocuments({
+        createdBy: req.user._id,
+    });
+
     return res.status(200).json(
         new ApiResponse(
             200,
-            "Current user fetched successfully",
-            req.user,
+            "Profile fetched successfully",
+            {
+                user,
+                totalTournaments,
+                totalTeams,
+                totalMatches,
+            }
         )
     );
+
 });
 const updateUserProfile = asyncHandler(async (req, res) => {
 
