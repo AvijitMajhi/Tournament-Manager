@@ -20,7 +20,7 @@ const bannerLocalPath=req.file?.path;
 let banner="";
 if(bannerLocalPath){
 const uploadedBanner=await uploadOnCloudinary(bannerLocalPath);
-if(!uploadOnCloudinary){
+if(!uploadedBanner){
     throw new ApiError(500,"Banner upload is failed")
 }
 banner = uploadedBanner.secure_url;

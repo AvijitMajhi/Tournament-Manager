@@ -22,10 +22,7 @@ const uploadOnCloudinary = async (localFilePath) => {
         }
 
         // ✅ RETURN ONLY SECURE URL
-        return {
-            url: result.secure_url,
-            public_id: result.public_id,
-        };
+        return result;
 
     } catch (error) {
         if (localFilePath && fs.existsSync(localFilePath)) {
