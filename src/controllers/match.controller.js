@@ -85,8 +85,8 @@ const createMatch = asyncHandler(async (req, res) => {
     return res.status(201).json(
         new ApiResponse(
             201,
-            match,
-            "Match created successfully"
+           
+            "Match created successfully", match
         )
     );
 });
