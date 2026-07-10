@@ -72,15 +72,20 @@ const createMatch = asyncHandler(async (req, res) => {
         );
     }
 
-    const match = await Match.create({
-        tournament,
-        homeTeam,
-        awayTeam,
-        matchDate,
-        venue,
-        round,
-        createdBy: req.user._id,
-    });
+const matchCount = await Match.countDocuments({
+    tournament,
+});
+
+const match = await Match.create({
+    tournament,
+    homeTeam,
+    awayTeam,
+    matchDate,
+    venue,
+    round,
+    matchNumber: matchCount + 1,
+    createdBy: req.user._id,
+});
 
     return res.status(201).json(
         new ApiResponse(
