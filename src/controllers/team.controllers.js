@@ -264,10 +264,9 @@ const getTeamsByTournament = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(
             200,
-            teams,
-            "Teams fetched successfully"
+            "Teams fetched successfully", teams
         )
     );
 
 });
- export {createTeam,getAllTeams,getTeamById,updateTeam,deleteTeam,getTeamsByTournament  }
+ export {createTeam,getAllTeams,getTeamById,updateTeam,deleteTeam,getTeamsByTournament};
