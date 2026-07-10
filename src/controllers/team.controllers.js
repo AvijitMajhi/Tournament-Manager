@@ -247,5 +247,27 @@ if (matchExists) {
     );
 
 });
+const getTeamsByTournament = asyncHandler(async (req, res) => {
 
- export {createTeam,getAllTeams,getTeamById,updateTeam,deleteTeam}
+    const { tournamentId } = req.params;
+
+    const tournament = await Tournament.findById(tournamentId);
+
+    if (!tournament) {
+        throw new ApiError(404, "Tournament not found");
+    }
+
+    const teams = await Team.find({
+        tournament: tournamentId,
+    }).sort({ name: 1 });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            teams,
+            "Teams fetched successfully"
+        )
+    );
+
+});
+ export {createTeam,getAllTeams,getTeamById,updateTeam,deleteTeam,getTeamsByTournament  }

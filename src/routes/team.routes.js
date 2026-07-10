@@ -6,7 +6,8 @@ import {
     getAllTeams,
     getTeamById,
     updateTeam,
-    deleteTeam
+    deleteTeam,
+    getTeamsByTournament,
 } from "../controllers/team.controllers.js";
 
 const router = Router();
@@ -18,7 +19,8 @@ router.route("/")
     createTeam
 )
 .get(getAllTeams);
-
+router.route("/tournament/:tournamentId")
+    .get(verifyJWT, getTeamsByTournament);
 router.route("/:id")
 .get(getTeamById)
 .patch(
